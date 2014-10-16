@@ -544,6 +544,54 @@ pulse_output_setup_stream(PulseOutput *po, const pa_sample_spec *ss,
 	return true;
 }
 
+static pa_sample_format_t
+get_bitformat(SampleFormat sample_format)
+{
+	/* Pulse supports U8 and S24LE/BE formats but mpd
+	   currently does not.  Pulse does not support S8. */
+	switch (sample_format) {
+	case SampleFormat::UNDEFINED:
+	case SampleFormat::DSD:
+	case SampleFormat::S8:
+		return PA_SAMPLE_INVALID;
+
+	case SampleFormat::S16:
+		return PA_SAMPLE_S16NE;
+
+	case SampleFormat::S24_P32:
+		return PA_SAMPLE_S24_32NE;
+
+	case SampleFormat::S32:
+		return PA_SAMPLE_S32NE;
+
+	case SampleFormat::FLOAT:
+		return PA_SAMPLE_FLOAT32NE;
+	}
+
+	assert(false);
+	gcc_unreachable();
+}
+
+static pa_sample_spec
+pulse_get_valid_spec(uint32_t sample_rate, SampleFormat sample_format,
+		uint8_t channels)
+{
+	pa_sample_spec test_spec;
+	int ret;
+
+	test_spec.format = get_bitformat(sample_format);
+	test_spec.rate = sample_rate;
+	test_spec.channels = channels;
+	if (test_spec.format == PA_SAMPLE_INVALID)
+		return test_spec;
+
+	ret = pa_sample_spec_valid(&test_spec);
+	if (ret == 0)
+		test_spec.format = PA_SAMPLE_INVALID;
+
+	return test_spec;
+}
+
 static bool
 pulse_output_open(AudioOutput *ao, AudioFormat &audio_format,
 		  Error &error)
@@ -579,13 +627,44 @@ pulse_output_open(AudioOutput *ao, AudioFormat &audio_format,
 		return false;
 	}
 
-	/* MPD doesn't support the other pulseaudio sample formats, so
-	   we just force MPD to send us everything as 16 bit */
-	audio_format.format = SampleFormat::S16;
+	/* pulseaudio can validate a sample_spec before opening the stream */
 
-	ss.format = PA_SAMPLE_S16NE;
-	ss.rate = audio_format.sample_rate;
-	ss.channels = audio_format.channels;
+	ss = pulse_get_valid_spec(audio_format.sample_rate,
+				audio_format.format, audio_format.channels);
+
+	/* if unsupported, try other formats */
+
+	if (ss.format == PA_SAMPLE_INVALID) {
+		/* Pulse doesn't yet support DSD so attempt to resample
+		   to high quality PCM - maybe higher would be better,
+		   but that would then typically need to be resampled
+		   twice! :-/ */
+		if (audio_format.format == SampleFormat::DSD)
+		{
+			audio_format.format = SampleFormat::FLOAT;
+			audio_format.sample_rate = 48000;
+		}
+
+		static const SampleFormat probe_formats[] = {
+			SampleFormat::S32,
+			SampleFormat::S24_P32,
+			SampleFormat::S16,
+			SampleFormat::UNDEFINED,
+		};
+
+		for (unsigned i = 0;
+		     ss.format == PA_SAMPLE_INVALID && probe_formats[i] != SampleFormat::UNDEFINED;
+		     ++i) {
+			const SampleFormat mpd_format = probe_formats[i];
+			if (mpd_format == audio_format.format)
+				continue;
+
+			ss = pulse_get_valid_spec(audio_format.sample_rate,
+					mpd_format, audio_format.channels);
+			if (ss.format != PA_SAMPLE_INVALID)
+				audio_format.format = mpd_format;
+		}
+	}
 
 	/* create a stream .. */
 
