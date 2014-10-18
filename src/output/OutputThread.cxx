@@ -37,6 +37,9 @@
 #include "util/ConstBuffer.hxx"
 #include "Log.hxx"
 #include "Compiler.h"
+#ifdef ENABLE_RTOPT
+#include "rt_opt.hxx"
+#endif
 
 #include <assert.h>
 #include <string.h>
@@ -547,8 +550,13 @@ AudioOutput::Task()
 {
 	FormatThreadName("output:%s", name);
 
+#ifdef ENABLE_RTOPT
+       rtopt_change_output_priority(name);
+       rtopt_change_output_timerslack(name);
+#else
 	SetThreadRealtime();
 	SetThreadTimerSlackUS(100);
+#endif
 
 	mutex.lock();
 

@@ -36,6 +36,10 @@
 #include "thread/Name.hxx"
 #include "Log.hxx"
 
+#ifdef ENABLE_RTOPT
+#include "rt_opt.hxx"
+#endif
+
 #include <string.h>
 
 static constexpr Domain player_domain("player");
@@ -1109,6 +1113,10 @@ player_task(void *arg)
 	PlayerControl &pc = *(PlayerControl *)arg;
 
 	SetThreadName("player");
+
+#ifdef ENABLE_RTOPT
+       rtopt_change_priority(RTOPT_PLAYER_PRIORITY_NAME);
+#endif
 
 	DecoderControl dc(pc.mutex, pc.cond);
 	decoder_thread_start(dc);

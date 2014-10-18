@@ -64,7 +64,9 @@
 #include "config/ConfigOption.hxx"
 #include "config/ConfigError.hxx"
 #include "Stats.hxx"
-
+#ifdef ENABLE_RTOPT
+#include "rt_opt.hxx"
+#endif
 #ifdef ENABLE_DATABASE
 #include "db/update/Service.hxx"
 #include "db/Configured.hxx"
@@ -508,6 +510,11 @@ int mpd_main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+#ifdef ENABLE_RTOPT
+	rtopt_init();
+	rtopt_change_priority(RTOPT_MAIN_PRIORITY_NAME);
+#endif
+
 #ifndef ANDROID
 	daemonize_set_user();
 	daemonize_begin(options.daemon);
@@ -542,6 +549,9 @@ int mpd_main(int argc, char *argv[])
 
 #ifdef ENABLE_DATABASE
 	const bool create_db = InitDatabaseAndStorage();
+#endif
+#ifdef ENABLE_RTOPT
+	rtopt_memlock();
 #endif
 
 	glue_sticker_init();

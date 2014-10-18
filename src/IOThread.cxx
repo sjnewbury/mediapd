@@ -27,6 +27,10 @@
 #include "system/FatalError.hxx"
 #include "util/Error.hxx"
 
+#ifdef ENABLE_RTOPT
+#include "rt_opt.hxx"
+#endif
+
 #include <assert.h>
 
 static struct {
@@ -50,6 +54,10 @@ static void
 io_thread_func(gcc_unused void *arg)
 {
 	SetThreadName("io");
+
+#ifdef ENABLE_RTOPT
+       rtopt_change_priority(RTOPT_IO_PRIORITY_NAME);
+#endif
 
 	/* lock+unlock to synchronize with io_thread_start(), to be
 	   sure that io.thread is set */

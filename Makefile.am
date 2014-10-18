@@ -183,6 +183,10 @@ libmpd_a_SOURCES = \
 	src/SongFilter.cxx src/SongFilter.hxx \
 	src/PlaylistFile.cxx src/PlaylistFile.hxx
 
+if ENABLE_RTOPT
+libmpd_a_SOURCES += src/rt_opt.hxx
+endif
+
 if ANDROID
 else
 libmpd_a_SOURCES += \
@@ -459,6 +463,11 @@ libicu_a_CPPFLAGS = $(AM_CPPFLAGS) \
 	$(ICU_CFLAGS)
 
 ICU_LDADD = libicu.a $(ICU_LIBS)
+
+if ENABLE_RTOPT
+src_mpd_SOURCES += \
+	src/rt_opt.cxx
+endif
 
 # PCM library
 

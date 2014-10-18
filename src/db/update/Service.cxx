@@ -34,6 +34,9 @@
 #include "thread/Id.hxx"
 #include "thread/Thread.hxx"
 #include "thread/Util.hxx"
+#ifdef ENABLE_RTOPT
+#include "rt_opt.hxx"
+#endif
 
 #ifndef NDEBUG
 #include "event/Loop.hxx"
@@ -121,7 +124,11 @@ UpdateService::Task()
 	else
 		LogDebug(update_domain, "starting");
 
+#ifdef ENABLE_RTOPT
+	rtopt_change_priority(RTOPT_UPDATE_PRIORITY_NAME);
+#else
 	SetThreadIdlePriority();
+#endif
 
 	modified = walk->Walk(next.db->GetRoot(), next.path_utf8.c_str(),
 			      next.discard);
