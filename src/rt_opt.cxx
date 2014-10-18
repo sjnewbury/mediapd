@@ -295,7 +295,7 @@ set_parameter(void) {
 
 	if ( enable_memlock ) {
 	  FormatDebug(rt_opt_domain,
-		      "realtime_option(set_parameter): memlock enable  stack_reserve : %d   heap_reserve : %d\n",
+		      "realtime_option(set_parameter): memlock enable  stack_reserve : %zu   heap_reserve : %zu\n",
 		      stack_reserve,heap_reserve);
 	}
 
@@ -412,13 +412,13 @@ void rtopt_memlock() {
 
 	if ( stack_reserve != (size_t)0 ) {
 		FormatDebug(rt_opt_domain,
-			 "realtime_option(rtopt_memlock): stack_reserve %d",stack_reserve);
+			 "realtime_option(rtopt_memlock): stack_reserve %zu",stack_reserve);
 		bzero(alloca(stack_reserve), stack_reserve);
 	}
 
 	if ( heap_reserve != (size_t)0 ) {
 		FormatDebug(rt_opt_domain,
-			 "realtime_option(rtopt_memlock): heap_reserve %d",heap_reserve);
+			 "realtime_option(rtopt_memlock): heap_reserve %zu",heap_reserve);
 		ptr = malloc(heap_reserve);
 		if ( ptr != NULL ) {
 			bzero(ptr, heap_reserve);

@@ -52,6 +52,9 @@ struct block_param {
 	unsigned GetUnsignedValue() const;
 
 	gcc_pure
+	unsigned long GetUnsignedLongValue() const;
+
+	gcc_pure
 	bool GetBoolValue() const;
 };
 
@@ -116,6 +119,9 @@ struct config_param {
 				   Error &error) const;
 
 	AllocatedPath GetBlockPath(const char *name, Error &error) const;
+
+	gcc_pure
+	size_t GetBlockValue(const char *name, size_t default_value) const;
 
 	gcc_pure
 	int GetBlockValue(const char *name, int default_value) const;

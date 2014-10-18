@@ -50,6 +50,17 @@ block_param::GetUnsignedValue() const
 	return (unsigned)value2;
 }
 
+unsigned long
+block_param::GetUnsignedLongValue() const
+{
+	char *endptr;
+	unsigned long value2 = strtoul(value.c_str(), &endptr, 0);
+	if (*endptr != 0)
+		FormatFatalError("Not a valid number in line %i", line);
+
+	return (unsigned)value2;
+}
+
 bool
 block_param::GetBoolValue() const
 {
@@ -145,6 +156,16 @@ config_param::GetBlockValue(const char *name, unsigned default_value) const
 		return default_value;
 
 	return bp->GetUnsignedValue();
+}
+
+unsigned long
+config_param::GetBlockValue(const char *name, unsigned long default_value) const
+{
+	const block_param *bp = GetBlockParam(name);
+	if (bp == nullptr)
+		return default_value;
+
+	return bp->GetUnsignedLongValue();
 }
 
 gcc_pure
